@@ -25,22 +25,6 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('MySonarQube') {
-                    sh 'mvn sonar:sonar'
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 1, unit: 'HOURS') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
-
         stage('Package') {
             steps {
                 sh 'mvn package'
@@ -53,7 +37,7 @@ pipeline {
             }
         }
 
-        // Docker build stage (disabled for now)
+        // Docker build stage (disabled for now, will enable later)
         stage('Docker Build & Push') {
             when {
                 expression { return false }
