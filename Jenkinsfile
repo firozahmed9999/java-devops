@@ -2,14 +2,14 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven3'  // configure in Jenkins
-        jdk 'Java11'    // configure in Jenkins
+        maven 'Maven3'   // must match Maven installation name in Jenkins
+        jdk 'Java11'     // must match JDK installation name in Jenkins
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/firoz/java-calculator-devops.git'
+                git branch: 'main', url: 'https://github.com/firozahmed9999/java-devops.git'
             }
         }
 
@@ -21,26 +21,9 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('MySonarQube') {
+                withSonarQubeEnv('MySonarQube') { // name from Jenkins config
                     sh 'mvn sonar:sonar'
                 }
-            }
-        }
-
-        stage('Docker Build & Push') {
-            steps {
-                script {
-                    dockerImage = docker.build("firoz/calculator-ui:${BUILD_NUMBER}")
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
-                        dockerImage.push()
-                    }
-                }
-            }
-        }
-
-        stage('Deploy to Container') {
-            steps {
-                sh 'docker run -d -p 8080:8080 firoz/calculator-ui:${BUILD_NUMBER}'
             }
         }
     }
