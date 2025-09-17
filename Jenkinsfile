@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven3'   // must match Maven installation name in Jenkins
-        jdk 'Java11'     // must match JDK installation name in Jenkins
+        maven 'Maven3'   // must match Maven name in Jenkins
+        jdk 'Java17'     // must match JDK name in Jenkins
     }
 
     stages {
@@ -15,14 +15,55 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'mvn clean package'
+                sh 'mvn clean compile'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'mvn test'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('MySonarQube') { // name from Jenkins config
+                withSonarQubeEnv('MySonarQube') {
                     sh 'mvn sonar:sonar'
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Package') {
+            steps {
+                sh 'mvn package'
+            }
+        }
+
+        stage('Archive Artifact') {
+            steps {
+                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+            }
+        }
+
+        // Docker build stage (disabled for now)
+        stage('Docker Build & Push') {
+            when {
+                expression { return false }
+            }
+            steps {
+                script {
+                    dockerImage = docker.build("firoz/calculator-ui:${BUILD_NUMBER}")
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
+                        dockerImage.push()
+                    }
                 }
             }
         }
