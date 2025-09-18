@@ -6,9 +6,9 @@ pipeline {
         MAVEN_HOME = tool 'Maven3'
         JAVA_HOME = tool 'Java17'
 
-        // Credentials from Jenkins
-        SONAR_TOKEN = credentials('sonar-token')                
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials') 
+        // Credentials from Jenkins -> Manage Jenkins -> Credentials
+        SONAR_TOKEN = credentials('sonar-token-1')                // use correct ID
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials') // Username + Token
     }
 
     stages {
