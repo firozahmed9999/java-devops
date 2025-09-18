@@ -32,7 +32,7 @@ pipeline {
                         $MAVEN_HOME/bin/mvn sonar:sonar \
                           -Dsonar.projectKey=java-devops-calculator \
                           -Dsonar.host.url=http://54.91.225.252:9000 \
-                          -Dsonar.login=$SONAR_TOKEN
+                          -Dsonar.token=$SONAR_TOKEN
                     """
                 }
             }
