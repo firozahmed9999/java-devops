@@ -4,11 +4,11 @@ pipeline {
     environment {
         // Tools installed in Jenkins
         MAVEN_HOME = tool 'Maven3'
-        JAVA_HOME  = tool 'Java17'
+        JAVA_HOME = tool 'Java17'
 
-        // Credentials from Jenkins -> Manage Jenkins -> Credentials
-        SONAR_TOKEN           = credentials('sonar-token')                // Secret text
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')      // Username + Token
+        // Credentials from Jenkins
+        SONAR_TOKEN = credentials('sonar-token')                
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials') 
     }
 
     stages {
@@ -21,21 +21,19 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                sh '$MAVEN_HOME/bin/mvn clean package -DskipTests'
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('MySonarQube') {
-                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                        sh """
-                            mvn sonar:sonar \
-                              -Dsonar.projectKey=java-devops-calculator \
-                              -Dsonar.host.url=http://54.91.225.252:9000 \
-                              -Dsonar.login=$SONAR_TOKEN
-                        """
-                    }
+                    sh """
+                        $MAVEN_HOME/bin/mvn sonar:sonar \
+                          -Dsonar.projectKey=java-devops-calculator \
+                          -Dsonar.host.url=http://54.91.225.252:9000 \
+                          -Dsonar.login=$SONAR_TOKEN
+                    """
                 }
             }
         }
