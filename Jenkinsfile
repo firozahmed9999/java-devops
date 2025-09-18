@@ -2,17 +2,13 @@ pipeline {
     agent any
 
     environment {
-        // Credentials
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
-        SONAR_TOKEN = credentials('sonar-token')
+        // Tools installed in Jenkins
+        MAVEN_HOME = tool 'Maven3'
+        JAVA_HOME = tool 'Java17'
 
-        // Docker Image Name
-        DOCKER_IMAGE = "firozahmed9999/java-application"
-    }
-
-    tools {
-        jdk 'Java17'        // use the JDK you configured in Jenkins
-        maven 'Maven3'      // use the Maven you configured in Jenkins
+        // Credentials from Jenkins -> Manage Jenkins -> Credentials
+        SONAR_TOKEN = credentials('sonar-token')                // Secret text
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials') // Username + Token
     }
 
     stages {
@@ -42,19 +38,13 @@ pipeline {
             }
         }
 
-        stage('Package') {
-            steps {
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
-            }
-        }
-
         stage('Docker Build & Push') {
             steps {
                 script {
                     sh """
                         echo "$DOCKERHUB_CREDENTIALS_PSW" | docker login -u "$DOCKERHUB_CREDENTIALS_USR" --password-stdin
-                        docker build -t $DOCKER_IMAGE:latest .
-                        docker push $DOCKER_IMAGE:latest
+                        docker build -t firozahmed9999/java-application:latest .
+                        docker push firozahmed9999/java-application:latest
                     """
                 }
             }
@@ -62,11 +52,8 @@ pipeline {
     }
 
     post {
-        always {
-            echo "Pipeline completed!"
-        }
         success {
-            echo "✅ Build, SonarQube analysis, and Docker push successful!"
+            echo "✅ Pipeline completed successfully!"
         }
         failure {
             echo "❌ Pipeline failed. Check logs."
