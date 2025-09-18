@@ -1,17 +1,25 @@
 pipeline {
     agent any
-    tools {
-        maven 'Maven3'
-        jdk 'Java17'
-    }
+
     environment {
-        SONAR_TOKEN = credentials('sonarqube-token')
+        // Credentials
         DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        SONAR_TOKEN = credentials('sonar-token')
+
+        // Docker Image Name
+        DOCKER_IMAGE = "firozahmed9999/java-application"
     }
+
+    tools {
+        jdk 'Java17'        // use the JDK you configured in Jenkins
+        maven 'Maven3'      // use the Maven you configured in Jenkins
+    }
+
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/firozahmed9999/java-devops.git'
+                git branch: 'main',
+                    url: 'https://github.com/firozahmed9999/java-devops.git'
             }
         }
 
@@ -24,7 +32,12 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('MySonarQube') {
-                    sh 'mvn sonar:sonar -Dsonar.projectKey=java-devops -Dsonar.host.url=http://<YOUR-SONARQUBE-SERVER-IP>:9000 -Dsonar.login=${SONAR_TOKEN}'
+                    sh """
+                        mvn sonar:sonar \
+                          -Dsonar.projectKey=java-devops-calculator \
+                          -Dsonar.host.url=http://54.91.225.252:9000 \
+                          -Dsonar.login=$SONAR_TOKEN
+                    """
                 }
             }
         }
@@ -38,13 +51,25 @@ pipeline {
         stage('Docker Build & Push') {
             steps {
                 script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
-                        def dockerImage = docker.build("firozahmed9999/java-application:${BUILD_NUMBER}")
-                        dockerImage.push()
-                        dockerImage.push("latest")
-                    }
+                    sh """
+                        echo "$DOCKERHUB_CREDENTIALS_PSW" | docker login -u "$DOCKERHUB_CREDENTIALS_USR" --password-stdin
+                        docker build -t $DOCKER_IMAGE:latest .
+                        docker push $DOCKER_IMAGE:latest
+                    """
                 }
             }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline completed!"
+        }
+        success {
+            echo "✅ Build, SonarQube analysis, and Docker push successful!"
+        }
+        failure {
+            echo "❌ Pipeline failed. Check logs."
         }
     }
 }
